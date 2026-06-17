@@ -19,6 +19,18 @@ from .prompts import (
 )
 from .resources import get_krx_info, get_pykrx_manual
 from .tools import (
+    get_dart_balance_sheet as get_dart_balance_sheet_impl,
+)
+from .tools import (
+    get_dart_cash_flow as get_dart_cash_flow_impl,
+)
+from .tools import (
+    get_dart_corp_code as get_dart_corp_code_impl,
+)
+from .tools import (
+    get_dart_income_statement as get_dart_income_statement_impl,
+)
+from .tools import (
     get_etf_ohlcv_by_date as get_etf_ohlcv_impl,
 )
 from .tools import (
@@ -685,6 +697,88 @@ def get_market_price_change(
     return get_price_change_impl(start_date, end_date, market)
 
 
+# ===== DART Financial Statement Tools =====
+
+
+@mcp.tool()
+def get_dart_corp_code(name: str) -> dict:
+    """
+    Look up a company's DART unique corporate code by company name.
+
+    The corp_code is required by all other DART financial statement tools.
+    Requires the DART_API_KEY environment variable.
+
+    Args:
+        name: Company name to search (e.g., "삼성전자")
+
+    Returns:
+        Dictionary with corp_code, corp_name, stock_code, and ceo_name
+
+    Example:
+        get_dart_corp_code("삼성전자")
+    """
+    return get_dart_corp_code_impl(name)
+
+
+@mcp.tool()
+def get_dart_income_statement(
+    corp_code: str, year: str, period: str = "11011"
+) -> dict:
+    """
+    Retrieve a company's income statement (손익계산서) from DART.
+
+    Args:
+        corp_code: DART corporate code (8 digits, from get_dart_corp_code)
+        year: Business year in YYYY format (e.g., "2023")
+        period: Report code - 11011(annual), 11012(half), 11013(Q1), 11014(Q3)
+
+    Returns:
+        Dictionary with income statement line items
+
+    Example:
+        get_dart_income_statement("00126380", "2023", "11011")
+    """
+    return get_dart_income_statement_impl(corp_code, year, period)
+
+
+@mcp.tool()
+def get_dart_balance_sheet(corp_code: str, year: str, period: str = "11011") -> dict:
+    """
+    Retrieve a company's balance sheet (재무상태표) from DART.
+
+    Args:
+        corp_code: DART corporate code (8 digits, from get_dart_corp_code)
+        year: Business year in YYYY format (e.g., "2023")
+        period: Report code - 11011(annual), 11012(half), 11013(Q1), 11014(Q3)
+
+    Returns:
+        Dictionary with balance sheet line items
+
+    Example:
+        get_dart_balance_sheet("00126380", "2023", "11011")
+    """
+    return get_dart_balance_sheet_impl(corp_code, year, period)
+
+
+@mcp.tool()
+def get_dart_cash_flow(corp_code: str, year: str, period: str = "11011") -> dict:
+    """
+    Retrieve a company's cash flow statement (현금흐름표) from DART.
+
+    Args:
+        corp_code: DART corporate code (8 digits, from get_dart_corp_code)
+        year: Business year in YYYY format (e.g., "2023")
+        period: Report code - 11011(annual), 11012(half), 11013(Q1), 11014(Q3)
+
+    Returns:
+        Dictionary with cash flow line items
+
+    Example:
+        get_dart_cash_flow("00126380", "2023", "11011")
+    """
+    return get_dart_cash_flow_impl(corp_code, year, period)
+
+
 def main():
     """Entry point for the MCP server."""
     parser = argparse.ArgumentParser(description="pykrx-mcp server")
@@ -707,6 +801,13 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if not os.getenv("DART_API_KEY"):
+        logger.warning(
+            "DART_API_KEY is not set. DART financial statement tools "
+            "(get_dart_*) will return an error until it is configured. "
+            "Get a key at https://opendart.fss.or.kr"
+        )
 
     if args.transport == "sse":
         logger.info(

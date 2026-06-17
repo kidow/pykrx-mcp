@@ -1503,6 +1503,7 @@ name = "pykrx-mcp"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "mcp" },
     { name = "pandas" },
     { name = "pykrx" },
@@ -1522,6 +1523,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "mcp", specifier = ">=1.1.2" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "pykrx", specifier = ">=1.2.3" },

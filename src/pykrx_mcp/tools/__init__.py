@@ -1,5 +1,11 @@
 """Explicit MCP tools for pykrx."""
 
+from .dart import (
+    get_dart_balance_sheet,
+    get_dart_cash_flow,
+    get_dart_corp_code,
+    get_dart_income_statement,
+)
 from .etf_price import get_etf_ohlcv_by_date, get_etf_ticker_list
 from .foreign_investment import get_exhaustion_rates_of_foreign_investment
 from .fundamental import get_market_fundamental_by_date
@@ -58,4 +64,9 @@ __all__ = [
     # Market-wide data
     "get_market_ohlcv_by_date",
     "get_market_price_change",
+    # DART financial statements
+    "get_dart_corp_code",
+    "get_dart_income_statement",
+    "get_dart_balance_sheet",
+    "get_dart_cash_flow",
 ]
