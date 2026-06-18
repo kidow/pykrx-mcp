@@ -47,9 +47,17 @@ def get_market_trading_volume_by_investor(
     ticker_upper = ticker.upper()
     if ticker_upper in ["KOSPI", "KOSDAQ", "KONEX", "ALL"]:
         # Market query
-        df = stock.get_market_trading_volume_by_investor(
-            start_date, end_date, ticker_upper
-        )
+        try:
+            df = stock.get_market_trading_volume_by_investor(
+                start_date, end_date, ticker_upper
+            )
+        except KeyError:
+            return {
+                "error": "KRX API 응답 없음 — 투자자별 거래량 조회 불가. KRX 서버가 세션 인증을 요구합니다.",
+                "ticker": ticker,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
     else:
         # Stock ticker query
         if not validate_ticker(ticker):
@@ -57,7 +65,15 @@ def get_market_trading_volume_by_investor(
                 "error": "Invalid ticker format. Must be 6 digits or market name.",
                 "ticker": ticker,
             }
-        df = stock.get_market_trading_volume_by_investor(start_date, end_date, ticker)
+        try:
+            df = stock.get_market_trading_volume_by_investor(start_date, end_date, ticker)
+        except KeyError:
+            return {
+                "error": "KRX API 응답 없음 — 투자자별 거래량 조회 불가. KRX 서버가 세션 인증을 요구합니다.",
+                "ticker": ticker,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
 
     if df.empty:
         return {
@@ -113,9 +129,17 @@ def get_market_trading_value_by_investor(
     ticker_upper = ticker.upper()
     if ticker_upper in ["KOSPI", "KOSDAQ", "KONEX", "ALL"]:
         # Market query
-        df = stock.get_market_trading_value_by_investor(
-            start_date, end_date, ticker_upper
-        )
+        try:
+            df = stock.get_market_trading_value_by_investor(
+                start_date, end_date, ticker_upper
+            )
+        except KeyError:
+            return {
+                "error": "KRX API 응답 없음 — 투자자별 거래대금 조회 불가. KRX 서버가 세션 인증을 요구합니다.",
+                "ticker": ticker,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
     else:
         # Stock ticker query
         if not validate_ticker(ticker):
@@ -123,7 +147,15 @@ def get_market_trading_value_by_investor(
                 "error": "Invalid ticker format. Must be 6 digits or market name.",
                 "ticker": ticker,
             }
-        df = stock.get_market_trading_value_by_investor(start_date, end_date, ticker)
+        try:
+            df = stock.get_market_trading_value_by_investor(start_date, end_date, ticker)
+        except KeyError:
+            return {
+                "error": "KRX API 응답 없음 — 투자자별 거래대금 조회 불가. KRX 서버가 세션 인증을 요구합니다.",
+                "ticker": ticker,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
 
     if df.empty:
         return {

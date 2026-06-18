@@ -209,14 +209,35 @@ def _get_financial_statement(
             "corp_code": corp_code,
             "bsns_year": year,
             "reprt_code": period,
-            "fs_div": "OFS",
         },
     )
     if "error" in data:
         return {**data, "corp_code": corp_code, "year": year, "period": period}
 
     rows = data.get("list", [])
-    filtered = [row for row in rows if row.get("sj_div") == sj_div]
+    # Prefer CFS (연결재무제표), fall back to OFS (별도재무제표)
+    cfs_rows = [r for r in rows if r.get("sj_div") == sj_div and r.get("fs_div") == "CFS"]
+    ofs_rows = [r for r in rows if r.get("sj_div") == sj_div and r.get("fs_div") == "OFS"]
+    filtered = cfs_rows if cfs_rows else ofs_rows
+
+    # fnlttSinglAcnt.json omits CF/SCE for some filers — retry with full statement API
+    if not filtered:
+        all_data = _request(
+            "fnlttSinglAcntAll.json",
+            {
+                "corp_code": corp_code,
+                "bsns_year": year,
+                "reprt_code": period,
+                "fs_div": "CFS",
+            },
+        )
+        if "error" not in all_data:
+            all_rows = all_data.get("list", [])
+            cfs_all = [r for r in all_rows if r.get("sj_div") == sj_div and r.get("fs_div") == "CFS"]
+            ofs_all = [r for r in all_rows if r.get("sj_div") == sj_div and r.get("fs_div") == "OFS"]
+            # fnlttSinglAcntAll may return CF/SCE rows with fs_div=None (연결 기준)
+            none_all = [r for r in all_rows if r.get("sj_div") == sj_div and r.get("fs_div") is None]
+            filtered = cfs_all if cfs_all else (ofs_all if ofs_all else none_all)
 
     if not filtered:
         return format_error_response(

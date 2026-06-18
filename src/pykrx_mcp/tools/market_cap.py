@@ -52,20 +52,39 @@ def get_market_cap_by_date(ticker: str, start_date: str, end_date: str) -> dict:
     if not valid:
         return format_error_response(msg, date=end_date, field="end_date")
 
-    # Fetch market cap data from pykrx
+    # Fetch market cap data from pykrx (KRX API)
     df = stock.get_market_cap_by_date(
         fromdate=start_date, todate=end_date, ticker=ticker
     )
 
-    if df.empty:
+    if not df.empty:
+        return format_dataframe_response(
+            df, ticker=ticker, start_date=start_date, end_date=end_date
+        )
+
+    # KRX API unavailable — fallback to Naver Finance OHLCV
+    # 시가총액/상장주식수 not available via this fallback
+    df_ohlcv = stock.get_market_ohlcv(
+        fromdate=start_date, todate=end_date, ticker=ticker
+    )
+
+    if df_ohlcv.empty:
         return format_error_response(
             f"No market cap data found for ticker {ticker} "
-            f"between {start_date} and {end_date}",
+            f"between {start_date} and {end_date}. "
+            f"KRX API unavailable and Naver Finance fallback also returned no data.",
             ticker=ticker,
             start_date=start_date,
             end_date=end_date,
         )
 
-    return format_dataframe_response(
-        df, ticker=ticker, start_date=start_date, end_date=end_date
+    result = format_dataframe_response(
+        df_ohlcv, ticker=ticker, start_date=start_date, end_date=end_date
     )
+    result["data_source"] = "naver_ohlcv_fallback"
+    result["note"] = (
+        "KRX API unavailable. 시가총액/상장주식수/거래대금 not included. "
+        "종가(종가) and 거래량 available. "
+        "Compute 시가총액 = 종가 × 상장주식수 (obtain from DART 자본금)."
+    )
+    return result

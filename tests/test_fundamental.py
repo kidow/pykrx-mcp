@@ -54,15 +54,17 @@ class TestGetMarketFundamentalByDate:
         assert "error" in result
         assert "YYYYMMDD" in result["error"]
 
+    @patch("pykrx_mcp.tools.fundamental._dart_fallback")
     @patch("pykrx_mcp.tools.fundamental.stock")
-    def test_empty_dataframe(self, mock_stock):
-        """Should handle empty DataFrame."""
+    def test_empty_dataframe_triggers_dart_fallback(self, mock_stock, mock_fallback):
+        """KRX empty → DART fallback called."""
         mock_stock.get_market_fundamental_by_date.return_value = pd.DataFrame()
+        mock_fallback.return_value = {"data_source": "dart_ohlcv_fallback", "row_count": 1, "data": [{}]}
 
-        result = get_market_fundamental_by_date("999999", "20240101", "20240105")
+        result = get_market_fundamental_by_date("000660", "20240101", "20240105")
 
-        assert "error" in result
-        assert "No fundamental data found" in result["error"]
+        mock_fallback.assert_called_once_with("000660", "20240101", "20240105")
+        assert result.get("data_source") == "dart_ohlcv_fallback"
 
     @patch("pykrx_mcp.tools.fundamental.stock")
     def test_pykrx_exception(self, mock_stock):

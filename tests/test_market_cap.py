@@ -61,9 +61,24 @@ class TestGetMarketCapByDate:
         assert "YYYYMMDD" in result["error"]
 
     @patch("pykrx_mcp.tools.market_cap.stock")
-    def test_empty_dataframe(self, mock_stock):
-        """Should handle empty DataFrame."""
+    def test_empty_dataframe_falls_back_to_ohlcv(self, mock_stock):
+        """KRX empty → fallback to Naver OHLCV."""
         mock_stock.get_market_cap_by_date.return_value = pd.DataFrame()
+        mock_stock.get_market_ohlcv.return_value = pd.DataFrame(
+            {"시가": [100], "고가": [110], "저가": [90], "종가": [105], "거래량": [1000], "등락률": [1.0]},
+        )
+
+        result = get_market_cap_by_date("999999", "20240101", "20240105")
+
+        assert "error" not in result
+        assert result.get("data_source") == "naver_ohlcv_fallback"
+        assert "note" in result
+
+    @patch("pykrx_mcp.tools.market_cap.stock")
+    def test_empty_dataframe_both_sources_fail(self, mock_stock):
+        """KRX empty + Naver empty → error."""
+        mock_stock.get_market_cap_by_date.return_value = pd.DataFrame()
+        mock_stock.get_market_ohlcv.return_value = pd.DataFrame()
 
         result = get_market_cap_by_date("999999", "20240101", "20240105")
 
